@@ -12,16 +12,16 @@ class Dueling_DQN_method:
         self.action_dim = action_dim
         self.state_dim = state_dim
         self.memory_counter = 0
-        self.memory_size = 3000
+        self.memory_size = 2000
         self.memory = np.empty([self.memory_size, 2*self.state_dim+1+1+1])
         self.batch_size = 32
         self.gamma = 0.9
         self.epsilon = 1
-        self.epsilon_decrease = 0.001
+        self.epsilon_decrease = 0.0004
         self.epsilon_min = 0.1
-        self.learning_rate = 0.001
+        self.learning_rate = 0.01
         self.learn_step_counter = 0
-        self.replace_target_limit = 200
+        self.replace_target_limit = 100
         # self.modelpath = sys.path[0] + '/data.chkp'
 
         self.build_model()
@@ -47,7 +47,7 @@ class Dueling_DQN_method:
         with tf.variable_scope('eval_network'):
             # c_names(collections_names) are the collections to store variables
             c_names, n_l1, w_initializer, b_initializer = \
-                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20, \
+                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 10, \
                 tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
             # first layer
             with tf.variable_scope('l1'):
