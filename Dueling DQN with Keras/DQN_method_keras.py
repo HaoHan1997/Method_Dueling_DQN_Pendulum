@@ -9,7 +9,7 @@ from keras.models import load_model
 
 class Dueling_DQN_method:
 
-    def __init__(self, action_dim, state_dim):
+    def __init__(self, action_dim, state_dim, reload_flag=False):
         self.action_dim = action_dim
         self.state_dim = state_dim
         self.memory_counter = 0
@@ -24,6 +24,8 @@ class Dueling_DQN_method:
         self.learn_step_counter = 0
         self.replace_target_limit = 200
         self.build_model()
+        if reload_flag:
+            self.model_load()
 
     def build_model(self):
 
@@ -114,11 +116,11 @@ class Dueling_DQN_method:
         if self.epsilon > self.epsilon_min:
             self.epsilon -= self.epsilon_decrease
 
-    def data_save(self):
+    def model_save(self):
         # model save
         self.model_eval.save('my_model.h5')  # creates a HDF5 file 'my_model.h5'
 
-    def data_load(self):
+    def model_load(self):
 
         # model load
         self.model_eval = load_model('my_model.h5')

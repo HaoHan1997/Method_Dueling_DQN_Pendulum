@@ -22,7 +22,7 @@ class Dueling_DQN_method:
         self.learning_rate = 0.001
         self.learn_step_counter = 0
         self.replace_target_limit = 200
-        # self.modelpath = sys.path[0] + '/data.chkp'
+        self.modelpath = sys.path[0] + '/data.chkp'
 
         self.build_model()
         t_params = tf.get_collection('target_net_params')
@@ -165,6 +165,12 @@ class Dueling_DQN_method:
         #     self.epsilon *= self.epsilon_decay
         if self.epsilon > self.epsilon_min:
             self.epsilon -= self.epsilon_decrease
+
+    def model_save(self):
+        # model save
+        self.actor_saver.save(self.sess, self.modelpath)
+
+
 
 
 

@@ -8,7 +8,7 @@ Lin Cheng 2018.01.15
 ## package input
 import gym
 import numpy as np
-from DDQN_tensorflow import Dueling_DQN_method
+from DQN_method_keras import Dueling_DQN_method
 import matplotlib.pyplot as plt
 
 # 导入environment
@@ -41,9 +41,9 @@ def train(RL):
 
             # 动作选取
             action_index = RL.chose_action(state_now, train=False)
-            # print(action_index)
             # action_index = np.random.randint(0, action_dim)
             action = action_sequence[action_index]
+            # print(action_index)
 
             # 状态返回
             state_next, reward, done, info = env.step(np.array([action]))

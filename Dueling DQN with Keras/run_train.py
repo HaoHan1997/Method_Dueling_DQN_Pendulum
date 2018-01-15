@@ -27,7 +27,7 @@ print(state_dim)
 
 #
 
-Dueling_DQN = Dueling_DQN_method(action_dim, state_dim)
+Dueling_DQN = Dueling_DQN_method(action_dim, state_dim, reload_flag=False)
 
 
 def train(RL):
@@ -56,11 +56,13 @@ def train(RL):
         if total_step > RL.memory_size:
             RL.Learn()
 
-        if total_step - RL.memory_size > 15000:
+        if total_step - RL.memory_size > 35000:
             break
 
         state_now = state_next
         total_step += 1
+
+    RL.model_save()
     return acc_r
 
 Q_dueling = train(Dueling_DQN)
