@@ -1,69 +1,80 @@
+"""
+Dueling DQN & Natural DQN comparison
 
+Lin Cheng 2018.01.15
+
+"""
 
 ## package input
 import gym
 import numpy as np
-from DDQN_tensorflow import DDQN_method
+from DDQN_tensorflow import Dueling_DQN_method
 import matplotlib.pyplot as plt
-# from gym import envs  #查看有什么环境
-# print(envs.registry.all())
 
-
-env = gym.make('CartPole-v0')
+# 导入environment
+env = gym.make('Pendulum-v0')
 env = env.unwrapped
+env.seed(1)
 
-action_dim = env.action_space.n
+# 确定动作和状态维度
+action_dim = 25
+action_high=env.action_space.high[0]
+action_low=env.action_space.low[0]
+action_sequence = np.linspace(action_low, action_high, action_dim)
 state_dim = env.observation_space.shape[0]
+print(action_sequence)
+print(state_dim)
 
-RL_agent = DDQN_method(action_dim, state_dim)
+#
 
-plt.axis([0, 100, 0, 5000])
-plt.ion()
-plt.grid(color='g', linewidth='0.3', linestyle='--')
+Dueling_DQN = Dueling_DQN_method(action_dim, state_dim)
 
 
-for ep in range(100):
-    state = env.reset()
-    state_now = np.reshape(state, [1, 4])
+def train(RL):
+    acc_r = [0]
+    total_step = 0
+    state_now = env.reset()
+    state_now = np.reshape(state_now, [1, 3])
+    while True:
+        if total_step > RL.memory_size + 9000: env.render()
 
-    for step in range(5000):
-        env.render()
+        # 动作选取
+        action_index = RL.chose_action(state_now, train=True)
+        # action_index = np.random.randint(0, action_dim)
+        action = action_sequence[action_index]
 
-        action = RL_agent.chose_action(state_now, train=True)
-        # action = env.action_space.sample()
-
-        # print(action)
-        state_next, reward, done, _  = env.step(action)
-        x, x_dot, theta, theta_dot = state_next
-        state_next = np.reshape(state_next, [1, 4])
-        # the smaller theta and closer to center the better
-        r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
-        r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
-        reward = r1 + r2
-        # reward = -100 if done else reward
+        # 状态返回
+        state_next, reward, done, info = env.step(np.array([action]))
+        state_next = np.reshape(state_next, [1, 3])
+        reward /= 10  #收益函数
+        # acc_r.append(reward + RL.gamma*acc_r[-1])
+        acc_r.append(reward + acc_r[-1])
 
         # store memory
-        RL_agent.memory_store(state_now, action, reward, state_next, done)
+        RL.memory_store(state_now, action_index, reward, state_next, done)
 
+        if total_step > RL.memory_size:
+            RL.Learn()
 
-        # learn
-        # if RL_agent.memory_counter > RL_agent.memory_size:
-        if RL_agent.memory_counter > 1000:
-             RL_agent.Learn()
-
-        # state update
-        state_now = state_next
-
-
-
-        if done:
-            # 打印分数并且跳出游戏循环
-            plt.scatter(ep, step, color='b')
-            plt.pause(0.1)
-            print("episode: {}/{}, score: {}，epsilon:{}"
-                  .format(ep, 300, step, RL_agent.epsilon))
+        if total_step - RL.memory_size > 15000:
             break
-RL_agent.data_save()
+
+        state_now = state_next
+        total_step += 1
+    return acc_r
+
+Q_dueling = train(Dueling_DQN)
+
+
+plt.figure(1)
+plt.plot(np.array(Q_dueling))
+plt.grid()
+plt.show()
+
+
+
+
+
 
 
 

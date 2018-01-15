@@ -6,23 +6,23 @@ tf.set_random_seed(1)
 import sys
 
 
-class DDQN_method:
+class Dueling_DQN_method:
 
-    def __init__(self, action_dim, state_dim, reload_flag = False):
+    def __init__(self, action_dim, state_dim, reload_flag=False):
         self.action_dim = action_dim
         self.state_dim = state_dim
         self.memory_counter = 0
-        self.memory_size = 2000
-        self.memory = np.empty([self.memory_size, 11])
+        self.memory_size = 3000
+        self.memory = np.empty([self.memory_size, 2*self.state_dim+1+1+1])
         self.batch_size = 32
         self.gamma = 0.9
         self.epsilon = 1
-        self.epsilon_decay = 0.999
+        self.epsilon_decrease = 0.001
         self.epsilon_min = 0.1
-        self.learning_rate = 0.01
+        self.learning_rate = 0.001
         self.learn_step_counter = 0
-        self.replace_target_limit = 100
-        self.modelpath = sys.path[0] + '/data.chkp'
+        self.replace_target_limit = 200
+        # self.modelpath = sys.path[0] + '/data.chkp'
 
         self.build_model()
         t_params = tf.get_collection('target_net_params')
@@ -38,7 +38,6 @@ class DDQN_method:
         # self.sess.run(tf.global_variables_initializer())
 
 
-
     def build_model(self):
 
         # eval network
@@ -48,7 +47,7 @@ class DDQN_method:
         with tf.variable_scope('eval_network'):
             # c_names(collections_names) are the collections to store variables
             c_names, n_l1, w_initializer, b_initializer = \
-                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 10, \
+                ['eval_net_params', tf.GraphKeys.GLOBAL_VARIABLES], 20, \
                 tf.random_normal_initializer(0., 0.3), tf.constant_initializer(0.1)  # config of layers
             # first layer
             with tf.variable_scope('l1'):
@@ -160,22 +159,13 @@ class DDQN_method:
                                      feed_dict={self.s: batch_state,
                                                 self.q_target: q_target,
                                                 })
-
         self.learn_step_counter += 1
 
         # if self.epsilon > self.epsilon_min:
         #     self.epsilon *= self.epsilon_decay
-        if self.epsilon>0.1:
-            self.epsilon -= 0.001
+        if self.epsilon > self.epsilon_min:
+            self.epsilon -= self.epsilon_decrease
 
-    def data_save(self):
-        # model save
-        self.actor_saver.save(self.sess, self.modelpath)  # creates a HDF5 file 'my_model.h5'
-
-    def data_load(self):
-
-        # model load
-        self.model_eval = load_model('my_model.h5')
 
 
 
