@@ -12,64 +12,70 @@ from DDQN_tensorflow import Dueling_DQN_method
 import matplotlib.pyplot as plt
 
 # 导入environment
-env = gym.make('Pendulum-v0')
+env = gym.make('CartPole-v0')
 env = env.unwrapped
 env.seed(1)
 
 # 确定动作和状态维度
-action_dim = 25
-action_high=env.action_space.high[0]
-action_low=env.action_space.low[0]
-action_sequence = np.linspace(action_low, action_high, action_dim)
+action_dim = env.action_space.n
 state_dim = env.observation_space.shape[0]
-print(action_sequence)
 print(state_dim)
 
 #
 
 Dueling_DQN = Dueling_DQN_method(action_dim, state_dim)
 
-
 def train(RL):
-    acc_r = [0]
-    total_step = 0
-    state_now = env.reset()
-    state_now = np.reshape(state_now, [1, 3])
-    while True:
-        if total_step > RL.memory_size + 9000: env.render()
+    max_ep = 120
+    acc_step = np.zeros((max_ep))
+    for ep in range(max_ep):
+        state_now = env.reset()
+        state_now = np.reshape(state_now, [1, 4])
 
-        # 动作选取
-        action_index = RL.chose_action(state_now, train=True)
-        # action_index = np.random.randint(0, action_dim)
-        action = action_sequence[action_index]
+        for step in range(5000):
+            env.render()
 
-        # 状态返回
-        state_next, reward, done, info = env.step(np.array([action]))
-        state_next = np.reshape(state_next, [1, 3])
-        reward /= 10  #收益函数
-        # acc_r.append(reward + RL.gamma*acc_r[-1])
-        acc_r.append(reward + acc_r[-1])
+            action = Dueling_DQN.chose_action(state_now, train=True)
+            # action = env.action_space.sample()
 
-        # store memory
-        RL.memory_store(state_now, action_index, reward, state_next, done)
+            # print(action)
+            state_next, reward, done, _ = env.step(action)
+            x, x_dot, theta, theta_dot = state_next
+            state_next = np.reshape(state_next, [1, 4])
+            # the smaller theta and closer to center the better
+            r1 = (env.x_threshold - abs(x)) / env.x_threshold - 0.8
+            r2 = (env.theta_threshold_radians - abs(theta)) / env.theta_threshold_radians - 0.5
+            reward = r1 + r2
+            # reward = -100 if done else reward
 
-        if total_step > RL.memory_size:
-            RL.Learn()
+            # store memory
+            Dueling_DQN.memory_store(state_now, action, reward, state_next, done)
 
-        if total_step - RL.memory_size > 15000:
-            break
+            # learn
+            # if RL_agent.memory_counter > RL_agent.memory_size:
+            if Dueling_DQN.memory_counter > 1000:
+                Dueling_DQN.Learn()
 
-        state_now = state_next
-        total_step += 1
-    return acc_r
+            # state update
+            state_now = state_next
 
-Q_dueling = train(Dueling_DQN)
+            if done:
+                # 打印分数并且跳出游戏循环
+                # plt.scatter(ep, step, color='b')
+                # plt.pause(0.1)
+                acc_step[ep] = np.array((step))
+                print("episode: {}/{}, score: {}，epsilon:{}"
+                      .format(ep, 300, step, Dueling_DQN.epsilon))
+                break
+    Dueling_DQN.model_save()
+    return acc_step
 
+acc_step = train(Dueling_DQN)
 
 plt.figure(1)
-plt.plot(np.array(Q_dueling))
-plt.grid()
+plt.plot(acc_step)
 plt.show()
+
 
 
 
